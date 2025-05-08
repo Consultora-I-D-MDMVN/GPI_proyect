@@ -1,4 +1,8 @@
 | Endpoint | Método | URL | Parámetros | Headers | Descripción | Respuesta Exitosa | Códigos de Estado |
 |----------|--------|-----|------------|---------|-------------|------------------|------------------|
-| Get Trait Categories | GET | /api/trait-categories | Ninguno | Authorization: Bearer {token} | Devuelve todas las categorías de traits con el conteo de modelos PRS | ```json [{"id": 1, "name": "Biology process", "traits": [1, 2], "pgss": 34}, {"id": 2, "name": "Body measurement", "traits": [3], "pgss": 5}]``` | 200 OK, 401 Unauthorized, 500 Internal Server Error |
-| Get Traits by Trait Category | GET | /api/trait-categories/{categoryId}/traits | categoryId: ID de la categoría (en path) | Authorization: Bearer {token} | Devuelve los traits asociados a una categoría específica | ```json {"1": {"id": 1, "name": "Cardiovascular measurement", "pgss": 34, "description": "Descripción del trait", "URL": "https://ejemplo.com", "onto_id": "EFO_000001"}}``` | 200 OK, 400 Bad Request, 401 Unauthorized, 500 Internal Server Error |
+| Get Seleccion fenotipos hijos | GET | http://localhost:3000/api/etl/getChildren?traitCategoryId={Idtrait} | Id trait | Authorization: Bearer {token} | Devuelve todas las categorías de traits con el conteo de modelos PRS | ```json [{
+        "id": 723,
+        "label": "ACPA-negative rheumatoid arthritis",
+        "description": "A subtype of rheumatoid arthritis defined by the absence of autoantibodies that are directed against citrullinated peptides and proteins."
+    },]``` | 200 OK, 401 Unauthorized, 500 Internal Server Error |
+
