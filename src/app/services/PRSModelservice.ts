@@ -7,8 +7,8 @@ export const getPrsModelsByTraits = async (traitIds: number[]) => {
       throw new Error('Se requiere al menos un trait para la búsqueda');
     }
 
-    // Consulta a la tabla intermedia (PRSModelToTrait) para obtener los modelos PRS relacionados
-    const prsModelsRelations = await prisma.PRSModelToTrait.findMany({
+    // Consulta a la tabla intermedia (pRSModelToTrait) para obtener los modelos PRS relacionados
+    const prsModelsRelations = await prisma.pRSModelToTrait.findMany({
       where: {
         traitId: {
           in: traitIds,
