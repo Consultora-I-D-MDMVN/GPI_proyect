@@ -1,3 +1,13 @@
+// Mock Prisma before any imports
+jest.mock('@/utils/prisma', () => ({
+  __esModule: true,
+  default: {
+    traitCategory: {
+      findMany: jest.fn(),
+    },
+  },
+}));
+
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { handleGetTraitCategories } from '../app/controllers/traitCategoryController';
 import * as traitCategoryService from '../app/services/traitCategoryService';

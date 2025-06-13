@@ -27,13 +27,13 @@ export const getTraitCategoriesWithCounts = async (): Promise<TraitCategorySumma
       },
     });
 
-    const categoriesSummary: TraitCategorySummary[] = traitCategories.map(category => {
+    const categoriesSummary: TraitCategorySummary[] = traitCategories.map((category: any) => {
       const traitIds = new Set<number>();
       const prsModelIds = new Set<number>();
 
-      category.traits.forEach(traitToCategory => {
+      category.traits.forEach((traitToCategory: any) => {
         traitIds.add(traitToCategory.trait.id);
-        traitToCategory.trait.prsModels.forEach(prsModelToTrait => {
+        traitToCategory.trait.prsModels.forEach((prsModelToTrait: any) => {
           prsModelIds.add(prsModelToTrait.prsModelId);
         });
       });
