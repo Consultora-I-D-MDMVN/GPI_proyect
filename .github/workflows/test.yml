@@ -1,0 +1,28 @@
+name: Run Tests on Push or PR to dev
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4 # Use v4 for latest features
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x' # Use Node.js v18 LTS
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm run test
