@@ -2,7 +2,7 @@
 jest.mock('@/utils/prisma', () => ({
   __esModule: true,
   default: {
-    PRSModelToTrait: {
+    pRSModelToTrait: {
       findMany: jest.fn(),
     },
   },
@@ -11,7 +11,7 @@ jest.mock('@/utils/prisma', () => ({
 import { getPrsModelsByTraits } from '../app/services/PRSModelservice';
 import prisma from '@/utils/prisma';
 
-const mockFindMany = prisma.PRSModelToTrait.findMany as jest.MockedFunction<typeof prisma.PRSModelToTrait.findMany>;
+const mockFindMany = prisma.pRSModelToTrait.findMany as jest.MockedFunction<typeof prisma.pRSModelToTrait.findMany>;
 
 describe('PRSModelservice', () => {
   beforeEach(() => {
