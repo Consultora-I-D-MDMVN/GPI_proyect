@@ -21,11 +21,16 @@ export const getPrsModelsByTraits = async (traitIds: number[]) => {
     });
 
     // Mapear los resultados a los modelos PRS
-    const prsModels = prsModelsRelations.map((relation) => relation.prsModel);
+    const prsModels = prsModelsRelations.map((relation: { prsModel: any }) => relation.prsModel);
 
     return prsModels;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Service Error fetching PRS models by traits:', error);
+    // Si el error es el de validación, relánzalo tal cual
+    if (error.message === 'Se requiere al menos un trait para la búsqueda') {
+      throw error;
+    }
+    // Si es otro error, lanza el mensaje genérico
     throw new Error('Failed to retrieve PRS models associated with selected traits.');
   }
 };
