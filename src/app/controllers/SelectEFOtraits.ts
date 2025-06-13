@@ -1,33 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getTraitsWithEfoId } from '../services/SelectEFOtraitsServices';
+import { getTraitIdsWithEfoId } from '../services/SelectEFOtraitsServices';
 
-export const handleGetTraitsWithEfoId = async (req: NextApiRequest, res: NextApiResponse) => {
+export const handleGetTraitIdsWithEfoId = async (req: NextApiRequest, res: NextApiResponse) => {
   try {
-    const traits = await getTraitsWithEfoId();
+    // Verifica que se haya proporcionado al menos un efoId
+    const efoIdsParam = req.query.efoIds;
 
-    const grouped = traits.reduce(
-      (
-        acc: Record<number, { id: number; efoId: string | null }[]>,
-        trait: {
-          id: number;
-          efoId: string | null;
-          categories: { traitCategory: { id: number } }[];
-        }
-      ) => {
-        const categoryIds = trait.categories.map(cat => cat.traitCategory.id);
-        categoryIds.forEach(catId => {
-          if (!acc[catId]) acc[catId] = [];
-          acc[catId].push({
-            id: trait.id,
-            efoId: trait.efoId,
-          });
-        });
-        return acc;
-      },
-      {}
-    );
+    if (!efoIdsParam) {
+      return res.status(400).json({ error: 'Debe proporcionar uno o más efoIds.' });
+    }
 
-    res.status(200).json(grouped);
+    const efoIds = Array.isArray(efoIdsParam)
+      ? efoIdsParam
+      : efoIdsParam.split(',').map((id) => id.trim());
+
+    const traitIds = await getTraitIdsWithEfoId(efoIds);
+
+    res.status(200).json(traitIds);
   } catch (error) {
     console.error('Error en TraitController:', error);
     res.status(500).json({ error: 'Error interno del servidor.' });
