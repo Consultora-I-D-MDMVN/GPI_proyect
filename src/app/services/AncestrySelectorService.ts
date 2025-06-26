@@ -1,35 +1,31 @@
 import prisma from '@/utils/prisma';
 
-export const getPrsModelsByAncestry = async (ancestryLabel: string) => {
-  const prsModels = await prisma.pRSModel.findMany({
+export const getPrsModelsByAncestry = async (ancestryLabelOrSymbol: string) => {
+  const ancestry = await prisma.broadAncestryCategory.findFirst({
     where: {
-      broadAncestryCategories: {
-        some: {
-          broadAncestryCategory: {
-            label: ancestryLabel,
-          },
-        },
-      },
+      OR: [
+        { label: ancestryLabelOrSymbol },
+        { symbol: ancestryLabelOrSymbol }
+      ]
     },
-    select: {
-      id: true,
-      name: true,
-      numberOfSNP: true,
-      pgscId: true,
-      pgscURL: true,
-      publicationId: true,
-      broadAncestryCategories: {
-        select: {
-          broadAncestryCategory: {
-            select: {
-              id: true,
-              label: true,
-            },
-          },
-        },
-      },
-    },
+    include: {
+      broadAncestryInModels: {
+        include: {
+          prsModel: {
+            include: {
+              broadAncestryCategories: {
+                include: {
+                  broadAncestryCategory: true
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   });
 
-  return prsModels;
+  if (!ancestry) return [];
+
+  return ancestry.broadAncestryInModels.map((item) => item.prsModel);
 };
