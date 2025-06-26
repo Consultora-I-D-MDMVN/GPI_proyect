@@ -22,10 +22,16 @@ export const handleGetPrsModelsByAncestry = async (
     const { ancestryLabel } = req.body as RequestBody;
 
     if (!ancestryLabel || typeof ancestryLabel !== 'string') {
-      return res.status(400).json({ error: 'Se requiere un ancestryLabel válido' });
+      return res.status(400).json({ error: 'No se ingresó ninguna ancestría, ingresa una para mostrar los modelos PRS asociados' });
     }
 
     const prsModels = await getPrsModelsByAncestry(ancestryLabel);
+
+    if (!prsModels || prsModels.length === 0) {
+      return res.status(404).json({
+        message: `No se encontraron modelos PRS para la ancestría "${ancestryLabel}".`
+      });
+    }
 
     res.status(200).json({
       message: `Se encontraron ${prsModels.length} modelos PRS para ancestría "${ancestryLabel}"`,
