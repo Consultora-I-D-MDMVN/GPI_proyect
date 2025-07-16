@@ -11,7 +11,22 @@ export const handleGetTraitCategories = async (
   res: NextApiResponse<TraitCategoryResponseData>
 ): Promise<void> => {
   try {
-    const categories = await getTraitCategoriesWithCounts();
+    // Extraer broadAncestryIds del query string
+    const { broadAncestryIds } = req.query;
+    let ancestryIds: number[] = [];
+
+    // Parsear broadAncestryIds si está presente
+    if (broadAncestryIds) {
+      if (typeof broadAncestryIds === 'string') {
+        // Si es una cadena, dividir por comas y convertir a números
+        ancestryIds = broadAncestryIds.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+      } else if (Array.isArray(broadAncestryIds)) {
+        // Si es un array, convertir cada elemento a número
+        ancestryIds = broadAncestryIds.map(id => parseInt(String(id), 10)).filter(id => !isNaN(id));
+      }
+    }
+
+    const categories = await getTraitCategoriesWithCounts(ancestryIds);
     res.status(200).json({ categories });
   } catch (error) {
     console.error("API Controller Error fetching trait categories:", error);
