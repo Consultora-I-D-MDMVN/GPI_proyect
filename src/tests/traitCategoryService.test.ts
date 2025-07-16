@@ -11,8 +11,8 @@ jest.mock('@/utils/prisma', () => ({
 import { getTraitCategoriesWithCounts } from '../app/services/traitCategoryService';
 import prisma from '@/utils/prisma';
 
-// Get the mocked version with proper typing
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+// Type the mock properly
+const mockFindMany = prisma.traitCategory.findMany as jest.MockedFunction<typeof prisma.traitCategory.findMany>;
 
 describe('TraitCategoryService', () => {
   beforeEach(() => {
@@ -49,7 +49,7 @@ describe('TraitCategoryService', () => {
         }
       ];
 
-      mockPrisma.traitCategory.findMany.mockResolvedValue(mockData);
+      mockFindMany.mockResolvedValue(mockData as any);
 
       // Act - call the function
       const result = await getTraitCategoriesWithCounts();
@@ -74,7 +74,7 @@ describe('TraitCategoryService', () => {
         }
       ];
 
-      mockPrisma.traitCategory.findMany.mockResolvedValue(mockData);
+      mockFindMany.mockResolvedValue(mockData as any);
 
       // Act
       const result = await getTraitCategoriesWithCounts();
@@ -92,7 +92,7 @@ describe('TraitCategoryService', () => {
     it('should throw error when database fails', async () => {
       // Arrange
       const errorMessage = 'Database connection failed';
-      mockPrisma.traitCategory.findMany.mockRejectedValue(new Error(errorMessage));
+      mockFindMany.mockRejectedValue(new Error(errorMessage));
 
       // Act & Assert
       await expect(getTraitCategoriesWithCounts()).rejects.toThrow('Could not fetch trait categories with counts from the database.');
