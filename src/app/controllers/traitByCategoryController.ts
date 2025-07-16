@@ -17,7 +17,7 @@ export const handleGetTraitsByCategory = async (
   req: NextApiRequest,
   res: NextApiResponse<TraitsByCategoryResponseData>
 ): Promise<void> => {
-  const { categoryId } = req.query;
+  const { categoryId, broadAncestryIds } = req.query;
 
   if (!categoryId || typeof categoryId !== 'string') {
     res.status(400).json({ error: 'Missing or invalid trait category ID' });
@@ -31,8 +31,20 @@ export const handleGetTraitsByCategory = async (
     return;
   }
 
+  // Parsear broadAncestryIds si está presente
+  let ancestryIds: number[] = [];
+  if (broadAncestryIds) {
+    if (typeof broadAncestryIds === 'string') {
+      // Si es una cadena, dividir por comas y convertir a números
+      ancestryIds = broadAncestryIds.split(',').map(id => parseInt(id.trim(), 10)).filter(id => !isNaN(id));
+    } else if (Array.isArray(broadAncestryIds)) {
+      // Si es un array, convertir cada elemento a número
+      ancestryIds = broadAncestryIds.map(id => parseInt(String(id), 10)).filter(id => !isNaN(id));
+    }
+  }
+
   try {
-    const traits = await getTraitsByCategoryId(traitCategoryId);
+    const traits = await getTraitsByCategoryId(traitCategoryId, ancestryIds);
     res.status(200).json({ traits });
   } catch (error) {
     console.error(`API Controller Error fetching traits for category ${traitCategoryId}:`, error);
