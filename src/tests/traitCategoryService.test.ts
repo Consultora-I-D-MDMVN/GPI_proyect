@@ -5,14 +5,18 @@ jest.mock('@/utils/prisma', () => ({
     traitCategory: {
       findMany: jest.fn(),
     },
+    pRSModel: {
+      findMany: jest.fn(),
+    },
   },
 }));
 
 import { getTraitCategoriesWithCounts } from '../app/services/traitCategoryService';
 import prisma from '@/utils/prisma';
 
-// Type the mock properly
+// Type the mocks properly
 const mockFindMany = prisma.traitCategory.findMany as jest.MockedFunction<typeof prisma.traitCategory.findMany>;
+const mockPRSModelFindMany = prisma.pRSModel.findMany as jest.MockedFunction<typeof prisma.pRSModel.findMany>;
 
 describe('TraitCategoryService', () => {
   beforeEach(() => {
@@ -20,72 +24,179 @@ describe('TraitCategoryService', () => {
   });
 
   describe('getTraitCategoriesWithCounts', () => {
-    it('should return categories with trait counts and PRS model counts', async () => {
-      // Arrange - setup mock data
-      const mockData = [
-        {
+    describe('without broadAncestryIds (original behavior)', () => {
+      it('should return categories with PRS model IDs in traits field', async () => {
+        // Arrange - setup mock data
+        const mockData = [
+          {
+            id: 1,
+            label: 'Physical Traits',
+            traits: [
+              {
+                trait: {
+                  id: 1,
+                  prsModels: [
+                    { prsModelId: 101 },
+                    { prsModelId: 102 }
+                  ]
+                }
+              },
+              {
+                trait: {
+                  id: 2,
+                  prsModels: [
+                    { prsModelId: 101 },
+                    { prsModelId: 103 }
+                  ]
+                }
+              }
+            ]
+          }
+        ];
+
+        mockFindMany.mockResolvedValue(mockData as any);
+
+        // Act - call the function without broadAncestryIds
+        const result = await getTraitCategoriesWithCounts();
+
+        // Assert - check the results
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual({
           id: 1,
-          label: 'Physical Traits',
-          traits: [
-            {
-              trait: {
-                id: 1,
-                prsModels: [
-                  { prsModelId: 1 },
-                  { prsModelId: 2 }
-                ]
-              }
-            },
-            {
-              trait: {
-                id: 2,
-                prsModels: [
-                  { prsModelId: 1 },
-                  { prsModelId: 3 }
-                ]
-              }
-            }
-          ]
-        }
-      ];
+          name: 'Physical Traits',
+          traits: [101, 102, 103], // PRS model IDs, not trait IDs
+          pgss: 3 // unique PRS models: 101, 102, 103
+        });
+      });
 
-      mockFindMany.mockResolvedValue(mockData as any);
+      it('should handle empty categories', async () => {
+        // Arrange
+        const mockData = [
+          {
+            id: 1,
+            label: 'Empty Category',
+            traits: []
+          }
+        ];
 
-      // Act - call the function
-      const result = await getTraitCategoriesWithCounts();
+        mockFindMany.mockResolvedValue(mockData as any);
 
-      // Assert - check the results
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        id: 1,
-        name: 'Physical Traits',
-        traits: [1, 2],
-        pgss: 3 // unique PRS models: 1, 2, 3
+        // Act
+        const result = await getTraitCategoriesWithCounts();
+
+        // Assert
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual({
+          id: 1,
+          name: 'Empty Category',
+          traits: [],
+          pgss: 0
+        });
       });
     });
 
-    it('should handle empty categories', async () => {
-      // Arrange
-      const mockData = [
-        {
+    describe('with broadAncestryIds (filtered behavior)', () => {
+      it('should return filtered categories based on ancestry IDs', async () => {
+        // Arrange - mock developed PRS models
+        const mockDevelopedPrsModels = [
+          { id: 101 },
+          { id: 102 }
+        ];
+
+        // Mock evaluated PRS models
+        const mockEvaluatedPrsModels = [
+          { id: 102 },
+          { id: 103 }
+        ];
+
+        // Mock trait categories
+        const mockTraitCategories = [
+          {
+            id: 1,
+            label: 'Physical Traits',
+            traits: [
+              {
+                trait: {
+                  id: 1,
+                  prsModels: [
+                    { prsModelId: 101 },
+                    { prsModelId: 104 } // Este no está en las listas válidas
+                  ]
+                }
+              },
+              {
+                trait: {
+                  id: 2,
+                  prsModels: [
+                    { prsModelId: 102 },
+                    { prsModelId: 103 }
+                  ]
+                }
+              }
+            ]
+          }
+        ];
+
+        // Setup mocks
+        mockPRSModelFindMany
+          .mockResolvedValueOnce(mockDevelopedPrsModels as any) // First call for developed models
+          .mockResolvedValueOnce(mockEvaluatedPrsModels as any); // Second call for evaluated models
+
+        mockFindMany.mockResolvedValue(mockTraitCategories as any);
+
+        // Act - call with broadAncestryIds
+        const result = await getTraitCategoriesWithCounts([58, 59]);
+
+        // Assert
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual({
           id: 1,
-          label: 'Empty Category',
-          traits: []
-        }
-      ];
+          name: 'Physical Traits',
+          traits: [101, 102, 103], // Only valid PRS model IDs
+          pgss: 3
+        });
 
-      mockFindMany.mockResolvedValue(mockData as any);
+        // Verify the correct calls were made
+        expect(mockPRSModelFindMany).toHaveBeenCalledTimes(2);
+        expect(mockFindMany).toHaveBeenCalledTimes(1);
+      });
 
-      // Act
-      const result = await getTraitCategoriesWithCounts();
+      it('should return empty traits when no valid PRS models found', async () => {
+        // Arrange
+        mockPRSModelFindMany
+          .mockResolvedValueOnce([]) // No developed models
+          .mockResolvedValueOnce([]); // No evaluated models
 
-      // Assert
-      expect(result).toHaveLength(1);
-      expect(result[0]).toEqual({
-        id: 1,
-        name: 'Empty Category',
-        traits: [],
-        pgss: 0
+        const mockTraitCategories = [
+          {
+            id: 1,
+            label: 'Test Category',
+            traits: [
+              {
+                trait: {
+                  id: 1,
+                  prsModels: [
+                    { prsModelId: 999 } // Not in valid list
+                  ]
+                }
+              }
+            ]
+          }
+        ];
+
+        mockFindMany.mockResolvedValue(mockTraitCategories as any);
+
+        // Act
+        const result = await getTraitCategoriesWithCounts([58]);
+
+        // Assert
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual({
+          id: 1,
+          name: 'Test Category',
+          traits: [], // No valid PRS models
+          pgss: 0
+        });
       });
     });
 
